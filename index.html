@@ -69,16 +69,15 @@
       text-align: center;
     }
     footer {
-  text-align: center;
-  padding: 10px 0;
-  background-color: #f4f4f4;
-  font-size: 14px;
-  color: #555;
-  position: fixed;
-  bottom: 0;
-  width: 100%;
-}
-
+      text-align: center;
+      padding: 10px 0;
+      background-color: #f4f4f4;
+      font-size: 14px;
+      color: #555;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
@@ -132,7 +131,7 @@
         id: courseId,
         name: "",
         grade: "F",
-        credit: 0
+        credit: null
       });
       renderSemesters();
     }
@@ -181,7 +180,7 @@
             <select onchange="updateCourseGrade(${semester.id}, ${course.id}, this.value)">
               ${Object.keys(gradeMapping).map(grade => `<option value="${grade}" ${course.grade === grade ? "selected" : ""}>${grade}</option>`).join("")}
             </select>
-            <input type="number" placeholder="Số tín chỉ" value="${course.credit}" oninput="updateCourseCredit(${semester.id}, ${course.id}, this.value)">
+            <input type="number" placeholder="Số tín chỉ" value="${course.credit !== null ? course.credit : ''}" oninput="updateCourseCredit(${semester.id}, ${course.id}, this.value)">
             <button onclick="deleteCourse(${semester.id}, ${course.id})">Xóa môn</button>
           `;
           courseContainer.appendChild(courseDiv);
@@ -209,7 +208,7 @@
       const semester = semesters.find(s => s.id === semesterId);
       const course = semester.courses.find(c => c.id === courseId);
       if (course) {
-        course.credit = parseFloat(newCredit) || 0;
+        course.credit = newCredit !== "" ? parseFloat(newCredit) : null;
       }
     }
 
@@ -219,13 +218,15 @@
       semesters.forEach(semester => {
         semester.courses.forEach(course => {
           const gradeValue = gradeMapping[course.grade];
-          totalScore += gradeValue * course.credit;
-          totalCredits += course.credit;
+          if (course.credit !== null) {
+            totalScore += gradeValue * course.credit;
+            totalCredits += course.credit;
 
-          if (course.grade !== "F") {
-            earnedCredits += course.credit;
-          } else {
-            retakeCredits += course.credit;
+            if (course.grade !== "F") {
+              earnedCredits += course.credit;
+            } else {
+              retakeCredits += course.credit;
+            }
           }
         });
       });
