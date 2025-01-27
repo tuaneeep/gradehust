@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TÍNH CPA HUST</title>
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+      color: #333;
+      line-height: 1.6;
+    }
+    header {
+      background-color: #c62828;
+      color: white;
+      padding: 20px 0;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      margin: 0;
+    }
+    .semester {
+      margin-bottom: 20px;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      background-color: #f4f4f4;
+    }
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+      align-items: center;
+    }
+    select, input {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      flex: 1;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #c62828;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #b71c1c;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+    }
+    footer {
+  text-align: center;
+  padding: 10px 0;
+  background-color: #f4f4f4;
+  font-size: 14px;
+  color: #555;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>TÍNH CPA HUST</h1>
+  </header>
+  <div class="container">
+    <div id="semester-container"></div>
+    <button onclick="addSemester()">Thêm học kỳ</button>
+    <button onclick="calculateCPA()">Tính CPA</button>
+    <div class="result" id="result"></div>
+  </div>
+  <footer>
+    <p>Website được tạo bởi Đỗ Hữu Tuấn</p>
+  </footer>
+  <script>
+    let semesters = [];
+    const semesterContainer = document.getElementById("semester-container");
+
+    // Quy đổi điểm chữ sang điểm GPA
+    const gradeMapping = {
+      "F": 0.0,
+      "D": 1.0,
+      "D+": 1.5,
+      "C": 2.0,
+      "C+": 2.5,
+      "B": 3.0,
+      "B+": 3.5,
+      "A": 4.0,
+      "A+": 4.0,
+    };
+
+    function addSemester() {
+      const semesterId = Date.now(); // Tạo ID duy nhất
+      const displayOrder = semesters.length + 1;
+      semesters.push({
+        id: semesterId,
+        displayOrder: displayOrder,
+        name: `Học kỳ ${displayOrder}`,
+        courses: []
+      });
+      renderSemesters();
+    }
+
+    function addCourse(semesterId) {
+      const semester = semesters.find(s => s.id === semesterId);
+      if (!semester) return; // Đảm bảo học kỳ tồn tại
+
+      const courseId = semester.courses.length;
+      semester.courses.push({
+        id: courseId,
+        name: "",
+        grade: "F",
+        credit: 0
+      });
+      renderSemesters();
+    }
+
+    function deleteCourse(semesterId, courseId) {
+      const semester = semesters.find(s => s.id === semesterId);
+      if (!semester) return; // Đảm bảo học kỳ tồn tại
+
+      semester.courses = semester.courses.filter(course => course.id !== courseId);
+      renderSemesters();
+    }
+
+    function deleteSemester(semesterId) {
+      semesters = semesters.filter(semester => semester.id !== semesterId);
+      renderSemesters();
+    }
+
+    function updateSemesterName(semesterId, newName) {
+      const semester = semesters.find(s => s.id === semesterId);
+      if (semester) {
+        semester.name = newName;
+      }
+    }
+
+    function renderSemesters() {
+      semesterContainer.innerHTML = "";
+      semesters.forEach(semester => {
+        const semesterDiv = document.createElement("div");
+        semesterDiv.className = "semester";
+        semesterDiv.id = `semester-${semester.id}`;
+        semesterDiv.innerHTML = `
+          <h2 contenteditable="true" onblur="updateSemesterName(${semester.id}, this.innerText)">${semester.name}</h2>
+          <div id="course-container-${semester.id}"></div>
+          <button onclick="addCourse(${semester.id})">Thêm môn học</button>
+          <button onclick="deleteSemester(${semester.id})">Xóa học kỳ</button>
+        `;
+        semesterContainer.appendChild(semesterDiv);
+
+        const courseContainer = document.getElementById(`course-container-${semester.id}`);
+        semester.courses.forEach(course => {
+          const courseDiv = document.createElement("div");
+          courseDiv.className = "input-group";
+          courseDiv.id = `course-${semester.id}-${course.id}`;
+          courseDiv.innerHTML = `
+            <input type="text" placeholder="Tên môn học" value="${course.name}" oninput="updateCourseName(${semester.id}, ${course.id}, this.value)">
+            <select onchange="updateCourseGrade(${semester.id}, ${course.id}, this.value)">
+              ${Object.keys(gradeMapping).map(grade => `<option value="${grade}" ${course.grade === grade ? "selected" : ""}>${grade}</option>`).join("")}
+            </select>
+            <input type="number" placeholder="Số tín chỉ" value="${course.credit}" oninput="updateCourseCredit(${semester.id}, ${course.id}, this.value)">
+            <button onclick="deleteCourse(${semester.id}, ${course.id})">Xóa môn</button>
+          `;
+          courseContainer.appendChild(courseDiv);
+        });
+      });
+    }
+
+    function updateCourseName(semesterId, courseId, newName) {
+      const semester = semesters.find(s => s.id === semesterId);
+      const course = semester.courses.find(c => c.id === courseId);
+      if (course) {
+        course.name = newName;
+      }
+    }
+
+    function updateCourseGrade(semesterId, courseId, newGrade) {
+      const semester = semesters.find(s => s.id === semesterId);
+      const course = semester.courses.find(c => c.id === courseId);
+      if (course) {
+        course.grade = newGrade;
+      }
+    }
+
+    function updateCourseCredit(semesterId, courseId, newCredit) {
+      const semester = semesters.find(s => s.id === semesterId);
+      const course = semester.courses.find(c => c.id === courseId);
+      if (course) {
+        course.credit = parseFloat(newCredit) || 0;
+      }
+    }
+
+    function calculateCPA() {
+      let totalScore = 0, totalCredits = 0, retakeCredits = 0, earnedCredits = 0;
+
+      semesters.forEach(semester => {
+        semester.courses.forEach(course => {
+          const gradeValue = gradeMapping[course.grade];
+          totalScore += gradeValue * course.credit;
+          totalCredits += course.credit;
+
+          if (course.grade !== "F") {
+            earnedCredits += course.credit;
+          } else {
+            retakeCredits += course.credit;
+          }
+        });
+      });
+
+      const cpa = totalCredits > 0 ? (totalScore / totalCredits).toFixed(2) : "0.00";
+      document.getElementById("result").innerText = `
+        CPA của bạn là: ${cpa}\n
+        Số tín chỉ tích lũy: ${earnedCredits}\n
+        Tín chỉ cần học lại: ${retakeCredits}
+      `;
+    }
+  </script>
+</body>
+</html>
